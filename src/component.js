@@ -3,9 +3,57 @@ import { extend } from './util';
 import { renderComponent } from './vdom/component';
 import { enqueueRender } from './render-queue';
 /**
- * Base Component class.
- * Provides `setState()` and `forceUpdate()`, which trigger rendering.
- * @typedef {object} Component
+ * @typedef {import('./vnode').VNode} VNode
+ * @typedef {import('./dom').PreactElement} PreactElement
+ */
+
+/**
+ * @template P, S
+ * @typedef Lifecycle
+ * @property {() => void} [componentWillMount]
+ * @property {() => void} [componentDidMount]
+ * @property {() => void} [componentWillUnmount]
+ * @property {() => object} [getChildContext]
+ * @property {(nextProps: Readonly<P>, nextContext: object) => void} [componentWillReceiveProps]
+ * @property {(nextProps: Readonly<P>, nextState: Readonly<S>, nextContext: object) => boolean} [shouldComponentUpdate]
+ * @property {(nextProps: Readonly<P>, nextState: Readonly<S>, nextContext: object) => void} [componentWillUpdate]
+ * @property {(previousProps: Readonly<P>, previousState: Readonly<S>, previousContext: any) => void} [componentDidUpdate]
+ * @property {(props: Readonly<P>, state: Readonly<S>, context: object) => VNode | void} render Accepts `props` and `state`, and returns a new Virtual DOM tree to build.
+ * Virtual DOM is generally constructed via [JSX](http://jasonformat.com/wtf-is-jsx).
+ */
+
+/**
+ * @template P, S
+ * @typedef ComponentInternals
+ * @property {boolean} _dirty
+ * @property {boolean} _disable
+ * @property {Component} _component
+ * @property {Component} _parentComponent
+ * @property {Array<() => void>} _renderCallbacks
+ * @property {any} __ref
+ * @property {any} __key
+ * @property {P} prevProps
+ * @property {S} prevState
+ * @property {any} prevContext
+ * @property {PreactElement} nextBase
+ */
+
+/**
+ * @typedef ComponentInstance
+ * @property {any} props
+ * @property {any} state
+ * @property {any} context
+ * @property {PreactElement} base
+ * @property {(state: object, callback: Function) => void} setState Update component state by copying properties from `state` to `this.state`.
+ * @property {(callback: Function) => void} forceUpdate Immediately perform a synchronous re-render of the component.
+ */
+
+/**
+ * Base Component class. Provides `setState()` and `forceUpdate()`, which trigger rendering.
+ * @typedef {Lifecycle & ComponentInstance & ComponentInternals} Component
+ */
+
+/**
  * @param {object} props The initial component props
  * @param {object} context The initial context from parent components' getChildContext
  * @public
