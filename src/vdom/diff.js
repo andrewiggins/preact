@@ -183,28 +183,31 @@ function idiff(dom, vnode, context, mountAll, componentRoot) {
  *  similar to hydration
  */
 function innerDiffNode(dom, vchildren, context, mountAll, isHydrating) {
-	let originalChildren = dom.childNodes,
-		children = [],
-		keyed = {},
-		keyedLen = 0,
+	/** @type {NodeListOf<import('../dom').PreactElement>} */
+	let originalChildren = dom.childNodes;
+	/** @type {Array<import('../dom').PreactElement>} */
+	let unkeyedChildren = [];
+	/** @type {Object.<string, import('../dom').PreactElement>} */
+	let keyedChildren = {};
+	let keyedLen = 0,
 		min = 0,
-		len = originalChildren.length,
-		childrenLen = 0,
+		originalLength = originalChildren.length,
+		unkeyedLength = 0,
 		vlen = vchildren ? vchildren.length : 0,
 		j, c, f, vchild, child;
 
 	// Build up a map of keyed children and an Array of unkeyed children:
-	if (len!==0) {
-		for (let i=0; i<len; i++) {
+	if (originalLength!==0) {
+		for (let i=0; i<originalLength; i++) {
 			let child = originalChildren[i],
 				props = child[ATTR_KEY],
 				key = vlen && props ? child._component ? child._component.__key : props.key : null;
 			if (key!=null) {
 				keyedLen++;
-				keyed[key] = child;
+				keyedChildren[key] = child;
 			}
 			else if (props || (child.splitText!==undefined ? (isHydrating ? child.nodeValue.trim() : true) : isHydrating)) {
-				children[childrenLen++] = child;
+				unkeyedChildren[unkeyedLength++] = child;
 			}
 		}
 	}
@@ -217,19 +220,19 @@ function innerDiffNode(dom, vchildren, context, mountAll, isHydrating) {
 			// attempt to find a node based on key matching
 			let key = vchild.key;
 			if (key!=null) {
-				if (keyedLen && keyed[key]!==undefined) {
-					child = keyed[key];
-					keyed[key] = undefined;
+				if (keyedLen && keyedChildren[key]!==undefined) {
+					child = keyedChildren[key];
+					keyedChildren[key] = undefined;
 					keyedLen--;
 				}
 			}
 			// attempt to pluck a node of the same type from the existing children
-			else if (min<childrenLen) {
-				for (j=min; j<childrenLen; j++) {
-					if (children[j]!==undefined && isSameNodeType(c = children[j], vchild, isHydrating)) {
+			else if (min<unkeyedLength) {
+				for (j=min; j<unkeyedLength; j++) {
+					if (unkeyedChildren[j]!==undefined && isSameNodeType(c = unkeyedChildren[j], vchild, isHydrating)) {
 						child = c;
-						children[j] = undefined;
-						if (j===childrenLen-1) childrenLen--;
+						unkeyedChildren[j] = undefined;
+						if (j===unkeyedLength-1) unkeyedLength--;
 						if (j===min) min++;
 						break;
 					}
@@ -257,12 +260,12 @@ function innerDiffNode(dom, vchildren, context, mountAll, isHydrating) {
 
 	// remove unused keyed children:
 	if (keyedLen) {
-		for (let i in keyed) if (keyed[i]!==undefined) recollectNodeTree(keyed[i], false);
+		for (let i in keyedChildren) if (keyedChildren[i]!==undefined) recollectNodeTree(keyedChildren[i], false);
 	}
 
 	// remove orphaned unkeyed children:
-	while (min<=childrenLen) {
-		if ((child = children[childrenLen--])!==undefined) recollectNodeTree(child, false);
+	while (min<=unkeyedLength) {
+		if ((child = unkeyedChildren[unkeyedLength--])!==undefined) recollectNodeTree(child, false);
 	}
 }
 
