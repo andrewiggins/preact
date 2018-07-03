@@ -287,6 +287,7 @@ function innerDiffNode(dom, vchildren, context, mountAll, isHydrating, component
  *  lifecycle, skips removal
  */
 export function recollectNodeTree(node, unmountOnly) {
+	// UNIT OF WORK
 	let component = node._component;
 	if (component) {
 		// if node is owned by a Component, unmount that component (ends up recursing back here)

@@ -81,7 +81,7 @@ export function catchErrorInComponent(error, component) {
  * @param {boolean} [isChild] ?
  * @private
  */
-export function renderComponent(component, renderMode, mountAll, isChild) {
+export function* renderComponent(component, renderMode, mountAll, isChild) {
 	if (component._disable) return;
 
 	let props = component.props,
@@ -197,7 +197,7 @@ export function renderComponent(component, renderMode, mountAll, isChild) {
 			}
 
 			if (toUnmount && toUnmount.base) {
-				unmountComponent(toUnmount);
+				yield () => unmountComponent(toUnmount);
 			}
 
 			component.base = base;
@@ -257,7 +257,7 @@ export function renderComponent(component, renderMode, mountAll, isChild) {
  * @returns {import('../dom').PreactElement} The created/mutated element
  * @private
  */
-export function buildComponentFromVNode(dom, vnode, context, mountAll, ancestorComponent) {
+export function* buildComponentFromVNode(dom, vnode, context, mountAll, ancestorComponent) {
 	let c = dom && dom._component,
 		originalComponent = c,
 		oldDom = dom,
@@ -274,7 +274,7 @@ export function buildComponentFromVNode(dom, vnode, context, mountAll, ancestorC
 	}
 	else {
 		if (originalComponent && !isDirectOwner) {
-			unmountComponent(originalComponent);
+			yield () => unmountComponent(originalComponent);
 			dom = oldDom = null;
 		}
 
@@ -304,6 +304,8 @@ export function buildComponentFromVNode(dom, vnode, context, mountAll, ancestorC
  * @private
  */
 export function unmountComponent(component) {
+	//# UNIT OF WORK
+
 	if (component._disable) return;
 	component._disable = true;
 
@@ -319,16 +321,19 @@ export function unmountComponent(component) {
 		}
 	}
 
+	//! COMPONENT SIDE EFFECT
 	component.base = null;
 
 	// recursively tear down & recollect high-order component children:
 	let inner = component._component;
 	if (inner) {
+		//! RECURSIVE SIDE EFFECT
 		unmountComponent(inner);
 	}
 	else if (base) {
 		if (base[ATTR_KEY] && base[ATTR_KEY].ref) base[ATTR_KEY].ref(null);
 
+		//! COMPONENT SIDE EFFECT
 		component.nextBase = base;
 
 		removeNode(base);
