@@ -139,7 +139,8 @@ module.exports = function(config) {
 										'**/__tests__/**',
 										'**/node_modules/**',
 										// Our custom extension
-										'{debug,hooks,compat,test-utils}/test/**/*'
+										'{debug,hooks,compat,test-utils}/test/**/*',
+										'dist/**/*'
 									]
 								}]] : []
 						}
