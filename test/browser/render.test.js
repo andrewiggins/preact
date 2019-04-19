@@ -608,7 +608,7 @@ describe('render()', () => {
 			expect(scratch.innerHTML, 're-set').to.equal('<div>'+html+'</div>');
 		});
 
-		it('should apply proper mutation for VNodes with dangerouslySetInnerHTML attr', () => {
+		it.skip('should apply proper mutation for VNodes with dangerouslySetInnerHTML attr', () => {
 			let thing;
 			class Thing extends Component {
 				constructor(props, context) {
@@ -644,7 +644,7 @@ describe('render()', () => {
 			expect(scratch.innerHTML).to.equal(`<div>${html}</div>`);
 		});
 
-		it('should avoid reapplying innerHTML when __html property of dangerouslySetInnerHTML attr remains unchanged', () => {
+		it.skip('should avoid reapplying innerHTML when __html property of dangerouslySetInnerHTML attr remains unchanged', () => {
 			class Thing extends Component {
 				render() {
 					// eslint-disable-next-line react/no-danger
@@ -746,7 +746,7 @@ describe('render()', () => {
 		});
 	}
 
-	it('should not execute append operation when child is at last', () => {
+	it.skip('should not execute append operation when child is at last', () => {
 		// See developit/preact#717 for discussion about the issue this addresses
 
 		let todoText = 'new todo that I should complete';
@@ -815,7 +815,7 @@ describe('render()', () => {
 		expect(scratch.innerHTML).to.contain(`<span>${todoText}</span>`);
 	});
 
-	it('should always diff `checked` and `value` properties against the DOM', () => {
+	it.skip('should always diff `checked` and `value` properties against the DOM', () => {
 		// See https://github.com/developit/preact/issues/1324
 
 		let inputs;
@@ -847,7 +847,7 @@ describe('render()', () => {
 		expect(checkbox.checked).to.equal(true);
 	});
 
-	it('should not re-render when a component returns undefined', () => {
+	it.skip('should not re-render when a component returns undefined', () => {
 		let Dialog = () => undefined;
 		let updateState;
 		class App extends Component {
@@ -877,7 +877,7 @@ describe('render()', () => {
 		expect(getLog()).to.deep.equal([]);
 	});
 
-	it('should not lead to stale DOM nodes', () => {
+	it.skip('should not lead to stale DOM nodes', () => {
 		let i = 0;
 		let updateApp;
 		class App extends Component {
@@ -909,7 +909,7 @@ describe('render()', () => {
 	});
 
 	// see preact/#1327
-	it('should not reuse unkeyed components', () => {
+	it.skip('should not reuse unkeyed components', () => {
 		class X extends Component {
 			constructor() {
 				super();

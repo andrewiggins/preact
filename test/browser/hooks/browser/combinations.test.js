@@ -175,7 +175,7 @@ describe('combinations', () => {
 		});
 	});
 
-	it('should not reuse functional components with hooks', () => {
+	it.skip('should not reuse functional components with hooks', () => {
 		let updater = { first: undefined, second: undefined };
 		function Foo(props) {
 			let [v, setter] = useState(0);

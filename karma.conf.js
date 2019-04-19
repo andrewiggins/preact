@@ -100,7 +100,7 @@ module.exports = function(config) {
 
 		files: [
 			{ pattern: 'test/polyfills.js', watched: false },
-			{ pattern: config.grep || 'test/{browser,shared}/**/*.test.js', watched: false }
+			{ pattern: config.grep || 'test/{browser,shared}/{hooks/**,}/*.test.js', watched: false }
 		],
 
 		preprocessors: {
@@ -140,7 +140,8 @@ module.exports = function(config) {
 										'**/node_modules/**',
 										// Our custom extension
 										'{debug,hooks,compat,test-utils}/test/**/*',
-										'dist/**/*'
+										'dist/**/*',
+										'test-utils/src/**/*'
 									]
 								}]] : []
 						}
