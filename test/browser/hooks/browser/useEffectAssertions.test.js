@@ -1,6 +1,6 @@
 import { setupRerender } from 'preact/test-utils';
 import { createElement as h, render } from 'preact';
-import { setupScratch, teardown } from '../../../test/_util/helpers';
+import { setupScratch, teardown } from '../../../_util/helpers';
 
 
 /** @jsx h */

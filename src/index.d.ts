@@ -3,6 +3,8 @@ export as namespace preact;
 
 import { JSXInternal } from "./jsx";
 
+export * from './hooks';
+
 declare namespace preact {
 	export import JSX = JSXInternal;
 

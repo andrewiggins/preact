@@ -1,6 +1,5 @@
 import { render as preactRender, cloneElement as preactCloneElement, createRef, h, Component, options, toChildArray, createContext, Fragment } from 'preact';
-import * as hooks from 'preact/hooks';
-export * from 'preact/hooks';
+import { useCallback, useContext, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'preact';
 import { assign } from '../../src/util';
 
 const version = '16.8.0'; // trick libraries to think we are react
@@ -402,4 +401,4 @@ export default assign({
 	memo,
 	forwardRef,
 	unstable_batchedUpdates
-}, hooks);
+}, { useCallback, useContext, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState });

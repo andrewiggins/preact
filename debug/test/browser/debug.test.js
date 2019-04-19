@@ -1,5 +1,5 @@
 import { createElement as h, options, render, createRef, Component, Fragment } from 'preact';
-import { useState, useEffect, useLayoutEffect, useMemo, useCallback } from 'preact/hooks';
+import { useState, useEffect, useLayoutEffect, useMemo, useCallback } from 'preact';
 import { setupScratch, teardown, clearOptions, serializeHtml } from '../../../test/_util/helpers';
 import { serializeVNode, initDebug } from '../../src/debug';
 import * as PropTypes from 'prop-types';

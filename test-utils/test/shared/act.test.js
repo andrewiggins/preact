@@ -1,5 +1,5 @@
 import { options, createElement as h, render } from 'preact';
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact';
 
 import { setupScratch, teardown } from '../../../test/_util/helpers';
 import { act } from '../../src';
