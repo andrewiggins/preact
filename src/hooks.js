@@ -1,4 +1,5 @@
 import options from './options';
+import { enqueueRender } from './component';
 
 /** @type {number} */
 let currentIndex;
@@ -88,7 +89,9 @@ export function useReducer(reducer, initialState, init) {
 				const nextValue = reducer(hookState._value[0], action);
 				if (hookState._value[0]!==nextValue) {
 					hookState._value[0] = nextValue;
-					hookState._component.setState({});
+					if (hookState._component._vnode) {
+						enqueueRender(hookState._component)
+					}
 				}
 			}
 		];
