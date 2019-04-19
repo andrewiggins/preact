@@ -4,6 +4,34 @@ import { diffChildren } from './children';
 import { diffProps } from './props';
 import { assign, removeNode } from '../util';
 import options from '../options';
+import { handleEffects } from '../hooks';
+
+/** @type {number} */
+let currentIndex;
+
+/** @type {import('../internal').Component} */
+export let currentComponent;
+
+/**
+ * Get a hook's state from the currentComponent
+ * @returns {import('../internal').HookState}
+ */
+export function getHookState() {
+	// Largely inspired by:
+	// * https://github.com/michael-klein/funcy.js/blob/f6be73468e6ec46b0ff5aa3cc4c9baf72a29025a/src/hooks/core_hooks.mjs
+	// * https://github.com/michael-klein/funcy.js/blob/650beaa58c43c33a74820a3c98b3c7079cf2e333/src/renderer.mjs
+	// Other implementations to look at:
+	// * https://codesandbox.io/s/mnox05qp8
+
+	let index = currentIndex++;
+
+	const hooks = currentComponent.__hooks || (currentComponent.__hooks = { _list: [], _pendingEffects: [], _pendingLayoutEffects: [] });
+
+	if (index >= hooks._list.length) {
+		hooks._list.push({});
+	}
+	return hooks._list[index];
+}
 
 /**
  * Diff two virtual nodes and apply proper changes to the DOM
@@ -74,7 +102,7 @@ export function diff(dom, parentDom, newVNode, oldVNode, context, isSvg, excessD
 			}
 			else {
 				// Instantiate the new component
-				newVNode._component = c = { render: newType }
+				newVNode._component = c = { render: newType };
 
 				c._ancestorComponent = ancestorComponent;
 				if (provider) provider.sub(c);
@@ -86,6 +114,13 @@ export function diff(dom, parentDom, newVNode, oldVNode, context, isSvg, excessD
 
 			c._vnode = newVNode;
 			c.context = cctx;
+
+			currentComponent = c;
+			currentIndex = 0;
+
+			if (c.__hooks) {
+				c.__hooks._pendingEffects = handleEffects(c.__hooks._pendingEffects);
+			}
 
 			if (options.render) options.render(newVNode);
 
@@ -111,6 +146,10 @@ export function diff(dom, parentDom, newVNode, oldVNode, context, isSvg, excessD
 			c._parentDom = parentDom;
 
 			if (newVNode.ref) applyRef(newVNode.ref, c, ancestorComponent);
+
+			if (c.__hooks) {
+				c.__hooks._pendingLayoutEffects = handleEffects(c.__hooks._pendingLayoutEffects);
+			}
 		}
 		else {
 			dom = diffElementNodes(dom, newVNode, oldVNode, context, isSvg, excessDomChildren, mounts, ancestorComponent);
@@ -262,7 +301,9 @@ export function unmount(vnode, ancestorComponent, skipRemove) {
 	vnode._dom = vnode._lastDomChild = null;
 
 	if ((r = vnode._component)!=null) {
-		// TODO#h-o: Move hooks unmount stuff here
+		if (r.__hooks) {
+			r.__hooks._list.forEach(hook => hook._cleanup && hook._cleanup());
+		}
 
 		r.base = r._parentDom = null;
 		if (r = r._prevVNode) unmount(r, ancestorComponent, skipRemove);

@@ -1,75 +1,9 @@
 import options from './options';
 import { enqueueRender } from './component';
-
-/** @type {number} */
-let currentIndex;
-
-/** @type {import('./internal').Component} */
-let currentComponent;
+import { getHookState, currentComponent } from './diff';
 
 /** @type {Array<import('./internal').Component>} */
 let afterPaintEffects = [];
-
-let oldBeforeRender = options.render;
-options.render = vnode => {
-	if (oldBeforeRender) oldBeforeRender(vnode);
-
-	currentComponent = vnode._component;
-	currentIndex = 0;
-
-	if (!currentComponent.__hooks) return;
-	currentComponent.__hooks._pendingEffects = handleEffects(currentComponent.__hooks._pendingEffects);
-};
-
-
-let oldAfterDiff = options.diffed;
-options.diffed = vnode => {
-	if (oldAfterDiff) oldAfterDiff(vnode);
-
-	const c = vnode._component;
-	if (!c) return;
-
-	const hooks = c.__hooks;
-	if (!hooks) return;
-
-	// TODO: Consider moving to a global queue. May need to move
-	// this to the `commit` option
-	hooks._pendingLayoutEffects = handleEffects(hooks._pendingLayoutEffects);
-};
-
-
-let oldBeforeUnmount = options.unmount;
-options.unmount = vnode => {
-	if (oldBeforeUnmount) oldBeforeUnmount(vnode);
-
-	const c = vnode._component;
-	if (!c) return;
-
-	const hooks = c.__hooks;
-	if (!hooks) return;
-
-	hooks._list.forEach(hook => hook._cleanup && hook._cleanup());
-};
-
-/**
- * Get a hook's state from the currentComponent
- * @param {number} index The index of the hook to get
- * @returns {import('./internal').HookState}
- */
-function getHookState(index) {
-	// Largely inspired by:
-	// * https://github.com/michael-klein/funcy.js/blob/f6be73468e6ec46b0ff5aa3cc4c9baf72a29025a/src/hooks/core_hooks.mjs
-	// * https://github.com/michael-klein/funcy.js/blob/650beaa58c43c33a74820a3c98b3c7079cf2e333/src/renderer.mjs
-	// Other implementations to look at:
-	// * https://codesandbox.io/s/mnox05qp8
-
-	const hooks = currentComponent.__hooks || (currentComponent.__hooks = { _list: [], _pendingEffects: [], _pendingLayoutEffects: [] });
-
-	if (index >= hooks._list.length) {
-		hooks._list.push({});
-	}
-	return hooks._list[index];
-}
 
 export function useState(initialState) {
 	return useReducer(invokeOrReturn, initialState);
@@ -78,7 +12,7 @@ export function useState(initialState) {
 export function useReducer(reducer, initialState, init) {
 
 	/** @type {import('./internal').ReducerHookState} */
-	const hookState = getHookState(currentIndex++);
+	const hookState = getHookState();
 	if (hookState._component == null) {
 		hookState._component = currentComponent;
 
@@ -107,7 +41,7 @@ export function useReducer(reducer, initialState, init) {
 export function useEffect(callback, args) {
 
 	/** @type {import('./internal').EffectHookState} */
-	const state = getHookState(currentIndex++);
+	const state = getHookState();
 	if (argsChanged(state._args, args)) {
 		state._value = callback;
 		state._args = args;
@@ -124,7 +58,7 @@ export function useEffect(callback, args) {
 export function useLayoutEffect(callback, args) {
 
 	/** @type {import('./internal').EffectHookState} */
-	const state = getHookState(currentIndex++);
+	const state = getHookState();
 	if (argsChanged(state._args, args)) {
 		state._value = callback;
 		state._args = args;
@@ -133,7 +67,7 @@ export function useLayoutEffect(callback, args) {
 }
 
 export function useRef(initialValue) {
-	const state = getHookState(currentIndex++);
+	const state = getHookState();
 	if (state._value == null) {
 		state._value = { current: initialValue };
 	}
@@ -148,7 +82,7 @@ export function useRef(initialValue) {
 export function useMemo(callback, args) {
 
 	/** @type {import('./internal').MemoHookState} */
-	const state = getHookState(currentIndex++);
+	const state = getHookState();
 	if (argsChanged(state._args, args)) {
 		state._args = args;
 		state._callback = callback;
@@ -172,7 +106,7 @@ export function useCallback(callback, args) {
 export function useContext(context) {
 	const provider = currentComponent.context[context._id];
 	if (provider == null) return context._defaultValue;
-	const state = getHookState(currentIndex++);
+	const state = getHookState();
 	if (state._value == null) {
 		state._value = true;
 		provider.sub(currentComponent);
@@ -219,7 +153,7 @@ if (typeof window !== 'undefined') {
 	};
 }
 
-function handleEffects(effects) {
+export function handleEffects(effects) {
 	effects.forEach(invokeCleanup);
 	effects.forEach(invokeEffect);
 	return [];
