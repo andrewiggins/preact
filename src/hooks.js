@@ -177,7 +177,7 @@ export function useContext(context) {
 		state._value = true;
 		provider.sub(currentComponent);
 	}
-	return provider.props.value;
+	return provider._vnode.props.value;
 }
 
 // Note: if someone used Component.debounce = requestAnimationFrame,

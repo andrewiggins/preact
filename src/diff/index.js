@@ -1,5 +1,4 @@
 import { EMPTY_OBJ, EMPTY_ARR } from '../constants';
-import { Component, enqueueRender } from '../component';
 import { coerceToVNode, Fragment } from '../create-element';
 import { diffChildren } from './children';
 import { diffProps } from './props';
@@ -36,8 +35,9 @@ export function diff(dom, parentDom, newVNode, oldVNode, context, isSvg, excessD
 
 	if (options.diff) options.diff(newVNode);
 
-	let c, p, isNew = false, oldProps, oldState, snapshot,
-		newType = newVNode.type;
+	/** @type {import('../internal').Component} */
+	let c;
+	let p, newType = newVNode.type;
 
 	/** @type {import('../internal').Component | null} */
 	let clearProcessingException;
@@ -74,79 +74,28 @@ export function diff(dom, parentDom, newVNode, oldVNode, context, isSvg, excessD
 			}
 			else {
 				// Instantiate the new component
-				if (newType.prototype && newType.prototype.render) {
-					newVNode._component = c = new newType(newVNode.props, cctx); // eslint-disable-line new-cap
-				}
-				else {
-					newVNode._component = c = new Component(newVNode.props, cctx);
-					c.constructor = newType;
-					c.render = doRender;
-				}
+				newVNode._component = c = { render: newType }
+
 				c._ancestorComponent = ancestorComponent;
 				if (provider) provider.sub(c);
 
-				c.props = newVNode.props;
-				if (!c.state) c.state = {};
 				c.context = cctx;
 				c._context = context;
-				isNew = c._dirty = true;
-				c._renderCallbacks = [];
+				c._dirty = true;
 			}
 
 			c._vnode = newVNode;
-
-			// Invoke getDerivedStateFromProps
-			let s = c._nextState || c.state;
-			if (newType.getDerivedStateFromProps!=null) {
-				oldState = assign({}, c.state);
-				if (s===c.state) s = c._nextState = assign({}, s);
-				assign(s, newType.getDerivedStateFromProps(newVNode.props, s));
-			}
-
-			// Invoke pre-render lifecycle methods
-			if (isNew) {
-				if (newType.getDerivedStateFromProps==null && c.componentWillMount!=null) c.componentWillMount();
-				if (c.componentDidMount!=null) mounts.push(c);
-			}
-			else {
-				if (newType.getDerivedStateFromProps==null && force==null && c.componentWillReceiveProps!=null) {
-					c.componentWillReceiveProps(newVNode.props, cctx);
-					s = c._nextState || c.state;
-				}
-
-				if (!force && c.shouldComponentUpdate!=null && c.shouldComponentUpdate(newVNode.props, s, cctx)===false) {
-					dom = newVNode._dom;
-					c.props = newVNode.props;
-					c.state = s;
-					c._dirty = false;
-					newVNode._lastDomChild = oldVNode._lastDomChild;
-					break outer;
-				}
-
-				if (c.componentWillUpdate!=null) {
-					c.componentWillUpdate(newVNode.props, s, cctx);
-				}
-			}
-
-			oldProps = c.props;
-			if (!oldState) oldState = c.state;
-
 			c.context = cctx;
-			c.props = newVNode.props;
-			c.state = s;
 
 			if (options.render) options.render(newVNode);
 
 			let prev = c._prevVNode || null;
-			let vnode = c._prevVNode = coerceToVNode(c.render(c.props, c.state, c.context));
+			let vnode = c._prevVNode = coerceToVNode(c.render(newVNode.props, cctx));
 			c._dirty = false;
 
+			// TODO#h-o: Provider relies on getChildContext...
 			if (c.getChildContext!=null) {
 				context = assign(assign({}, context), c.getChildContext());
-			}
-
-			if (!isNew && c.getSnapshotBeforeUpdate!=null) {
-				snapshot = c.getSnapshotBeforeUpdate(oldProps, oldState);
 			}
 
 			c._depth = ancestorComponent ? (ancestorComponent._depth || 0) + 1 : 0;
@@ -173,16 +122,6 @@ export function diff(dom, parentDom, newVNode, oldVNode, context, isSvg, excessD
 
 		newVNode._dom = dom;
 
-		if (c!=null) {
-			while (p=c._renderCallbacks.pop()) p.call(c);
-
-			// Don't call componentDidUpdate on mount or when we bailed out via
-			// `shouldComponentUpdate`
-			if (!isNew && oldProps!=null && c.componentDidUpdate!=null) {
-				c.componentDidUpdate(oldProps, oldState, snapshot);
-			}
-		}
-
 		if (clearProcessingException) {
 			c._processingException = null;
 		}
@@ -197,16 +136,6 @@ export function diff(dom, parentDom, newVNode, oldVNode, context, isSvg, excessD
 }
 
 export function commitRoot(mounts, root) {
-	let c;
-	while ((c = mounts.pop())) {
-		try {
-			c.componentDidMount();
-		}
-		catch (e) {
-			catchErrorInComponent(e, c._ancestorComponent);
-		}
-	}
-
 	if (options.commit) options.commit(root);
 }
 
@@ -333,14 +262,7 @@ export function unmount(vnode, ancestorComponent, skipRemove) {
 	vnode._dom = vnode._lastDomChild = null;
 
 	if ((r = vnode._component)!=null) {
-		if (r.componentWillUnmount) {
-			try {
-				r.componentWillUnmount();
-			}
-			catch (e) {
-				catchErrorInComponent(e, ancestorComponent);
-			}
-		}
+		// TODO#h-o: Move hooks unmount stuff here
 
 		r.base = r._parentDom = null;
 		if (r = r._prevVNode) unmount(r, ancestorComponent, skipRemove);
@@ -354,11 +276,6 @@ export function unmount(vnode, ancestorComponent, skipRemove) {
 	if (dom!=null) removeNode(dom);
 }
 
-/** The `.render()` method for a PFC backing instance. */
-function doRender(props, state, context) {
-	return this.constructor(props, context);
-}
-
 /**
  * Find the closest error boundary to a thrown error and call it
  * @param {object} error The thrown value
@@ -366,24 +283,24 @@ function doRender(props, state, context) {
  * component check for error boundary behaviors
  */
 function catchErrorInComponent(error, component) {
-	for (; component; component = component._ancestorComponent) {
-		if (!component._processingException) {
-			try {
-				if (component.constructor.getDerivedStateFromError!=null) {
-					component.setState(component.constructor.getDerivedStateFromError(error));
-				}
-				else if (component.componentDidCatch!=null) {
-					component.componentDidCatch(error);
-				}
-				else {
-					continue;
-				}
-				return enqueueRender(component._processingException = component);
-			}
-			catch (e) {
-				error = e;
-			}
-		}
-	}
+	// for (; component; component = component._ancestorComponent) {
+	// 	if (!component._processingException) {
+	// 		try {
+	// 			if (component.constructor.getDerivedStateFromError!=null) {
+	// 				component.setState(component.constructor.getDerivedStateFromError(error));
+	// 			}
+	// 			else if (component.componentDidCatch!=null) {
+	// 				component.componentDidCatch(error);
+	// 			}
+	// 			else {
+	// 				continue;
+	// 			}
+	// 			return enqueueRender(component._processingException = component);
+	// 		}
+	// 		catch (e) {
+	// 			error = e;
+	// 		}
+	// 	}
+	// }
 	throw error;
 }
