@@ -27,24 +27,37 @@ jobs:
           cat metadata.json
           echo "BASE_REF=$(jq --raw-output '.base.ref' metadata.json)" >> $GITHUB_ENV
           echo "BASE_SHA=$(jq --raw-output '.base.sha' metadata.json)" >> $GITHUB_ENV
-          echo $BASE_REF
-          echo $BASE_SHA
       - name: Download build output package
         uses: dawidd6/action-download-artifact@v2
         with:
           name: npm-package
           workflow: ${{github.event.workflow.id}}
           run_id: ${{github.event.workflow_run.id}}
+          path: build-output
+      - name: Prepare build output
+        run: |
+          cd build-output
+          ls -al
+          tar -xzf preact.tgz
+          ls -al
+      - name: Upload build output locally
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-output
+          path: build-output/package/
       - name: Download base build package
         uses: andrewiggins/download-base-artifact@v1
         with:
           artifact: npm-package
+          path: base
           workflow: ${{github.event.workflow.id}}
           baseRef: ${{env.BASE_REF}}
           baseSha: ${{env.BASE_SHA}}
-      # - name: Prepare build output
-      #   run: |
-      #     tar -xzf preact.tgz
+      - name: Upload base build package locally
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-output
+          path: base/preact.tgz
 
   bench_text_update:
     name: Bench text_update
@@ -56,16 +69,9 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: '14.x'
-      - name: Download build output
-        uses: dawidd6/action-download-artifact@v2
+      - uses: actions/download-artifact@v2
         with:
-          workflow: ${{github.event.workflow.id}}
-          run_id: ${{github.event.workflow_run.id}}
           name: build-output
-      - uses: andrewiggins/download-base-artifact@v1
-        with:
-          artifact: npm-package
-          required: false
       - run: ls -al .
       - run: ls -al dist
       - name: install & build
