@@ -8,7 +8,7 @@ on:
 
 jobs:
   initialize:
-    name: Initialize Tachometer comment
+    name: Initialize analysis environment
     runs-on: ubuntu-latest
     if: github.event.workflow_run.conclusion == 'success'
     steps:
@@ -24,8 +24,8 @@ jobs:
           name: metadata
       - name: Set metadata env variables
         run: |
-          echo "BASE_REF=$(jq '.base.ref' metadata.json)" >> $GITHUB_ENV
-          echo "BASE_SHA=$(jq '.base.sha' metadata.json)" >> $GITHUB_ENV
+          echo "BASE_REF=$(jq --raw-output '.base.ref' metadata.json)" >> $GITHUB_ENV
+          echo "BASE_SHA=$(jq --raw-output '.base.sha' metadata.json)" >> $GITHUB_ENV
       - name: Log envs
         run: |
           echo $BASE_REF
