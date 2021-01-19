@@ -50,12 +50,19 @@ jobs:
         run: |
           npm pack --ignore-scripts
           mv preact-*.tgz preact.tgz
-          tar -xzf preact.tgz
-      - name: Upload build output
+          # tar -xzf preact.tgz
+      - name: Compute build metadata
+        run: node ./config/compute-build-metadata.js
+      - name: Upload build metadata
         uses: actions/upload-artifact@v2
         with:
-          name: build-output
-          path: package/
+          name: metadata
+          path: metadata.json
+      # - name: Upload build output
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     name: build-output
+      #     path: package/
       - name: Upload npm package
         uses: actions/upload-artifact@v2
         with:

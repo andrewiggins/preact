@@ -12,12 +12,29 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.workflow_run.conclusion == 'success'
     steps:
-      - name: Log payload
-        run: cat $GITHUB_EVENT_PATH
       - name: Initialize Tachometer Results Report
         uses: andrewiggins/tachometer-reporter-action@v2
         with:
           initialize: true
+      - name: Download build metadata
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: ${{github.event.workflow.id}}
+          run_id: ${{github.event.workflow_run.id}}
+          name: metadata
+      - name: Download new build package
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: ${{github.event.workflow.id}}
+          run_id: ${{github.event.workflow_run.id}}
+          name: npm-package
+      # - name: Prepare build output
+      #   run: |
+      #     tar -xzf preact.tgz
+      - name: Log payload
+        run: cat $GITHUB_EVENT_PATH
+      - name: Log metadata
+        run: cat metadata.json
 
   bench_text_update:
     name: Bench text_update
@@ -29,17 +46,18 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: '14.x'
-      - name: Download artifact
+      - name: Download build output
         uses: dawidd6/action-download-artifact@v2
         with:
           workflow: ${{github.event.workflow.id}}
           run_id: ${{github.event.workflow_run.id}}
           name: build-output
-      - run: ls -al; ls -al dist
       - uses: andrewiggins/download-base-artifact@v1
         with:
           artifact: npm-package
           required: false
+      - run: ls -al .
+      - run: ls -al dist
       - name: install & build
         run: |
           cd benches
