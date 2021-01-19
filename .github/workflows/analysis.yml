@@ -27,8 +27,6 @@ jobs:
           cat metadata.json
           echo "BASE_REF=$(jq --raw-output '.base.ref' metadata.json)" >> $GITHUB_ENV
           echo "BASE_SHA=$(jq --raw-output '.base.sha' metadata.json)" >> $GITHUB_ENV
-      - name: Log envs
-        run: |
           echo $BASE_REF
           echo $BASE_SHA
       - name: Download build output package
