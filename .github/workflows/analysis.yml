@@ -24,6 +24,7 @@ jobs:
           name: metadata
       - name: Set metadata env variables
         run: |
+          cat metadata.json
           echo "BASE_REF=$(jq --raw-output '.base.ref' metadata.json)" >> $GITHUB_ENV
           echo "BASE_SHA=$(jq --raw-output '.base.sha' metadata.json)" >> $GITHUB_ENV
       - name: Log envs
@@ -40,15 +41,12 @@ jobs:
         uses: andrewiggins/download-base-artifact@v1
         with:
           artifact: npm-package
+          workflow: ${{github.event.workflow.id}}
           baseRef: ${{env.BASE_REF}}
           baseSha: ${{env.BASE_SHA}}
       # - name: Prepare build output
       #   run: |
       #     tar -xzf preact.tgz
-      - name: Log payload
-        run: cat $GITHUB_EVENT_PATH
-      - name: Log metadata
-        run: cat metadata.json
 
   bench_text_update:
     name: Bench text_update
