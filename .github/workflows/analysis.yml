@@ -24,16 +24,22 @@ jobs:
           name: metadata
       - name: Set metadata env variables
         run: |
-          echo "BASE_REF=$(jq '.base.ref' metadata.json)"
-          echo "BASE_SHA=$(jq '.base.sha' metadata.json)"
-          echo "BASE_REF=yellow" >> $GITHUB_ENV
-          echo "BASE_SHA=yellow" >> $GITHUB_ENV
-      - name: Download new build package
+          echo "BASE_REF=$(jq '.base.ref' metadata.json)" >> $GITHUB_ENV
+          echo "BASE_SHA=$(jq '.base.sha' metadata.json)" >> $GITHUB_ENV
+      - name: Log envs
+        run: |
+          echo $BASE_REF
+          echo $BASE_SHA
+      - name: Download build output package
         uses: dawidd6/action-download-artifact@v2
         with:
+          name: npm-package
           workflow: ${{github.event.workflow.id}}
           run_id: ${{github.event.workflow_run.id}}
-          name: npm-package
+      - name: Download base build package
+        uses: andrewiggins/download-base-artifact@v1
+        with:
+          artifact: npm-package
           baseRef: ${{env.BASE_REF}}
           baseSha: ${{env.BASE_SHA}}
       # - name: Prepare build output
