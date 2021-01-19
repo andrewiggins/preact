@@ -1,4 +1,4 @@
-// 5
+// 6
 export { render, hydrate } from './render';
 export {
 	createElement,
