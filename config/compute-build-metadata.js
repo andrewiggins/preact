@@ -15,20 +15,48 @@ function gitRevParse(ref, abbrev = false) {
 	return execFileSync('git', args, { encoding: 'utf8' }).trim();
 }
 
+function gitChangedFiles(ref1, ref2) {
+	return execFileSync('git', ['diff', '--name-only', ref1, ref2], {
+		encoding: 'utf8'
+	})
+		.trim()
+		.split('\n')
+		.map(s => s.trim());
+}
+
+/**
+ * @param {ReturnType<typeof github.getOctokit>} octokit
+ * @param {{ owner: string; repo: string; number: number }} pr
+ * @returns {Promise<string[]>}
+ */
+async function prChangedFiles(octokit, pr) {
+	return (
+		await octokit.pulls.listFiles({
+			owner: pr.owner,
+			repo: pr.repo,
+			pull_number: pr.number
+		})
+	).data.map(file => file.filename);
+}
+
 /**
  * @typedef Metadata
  * @property {string[]} changedPaths
  * @property {{ ref: string; sha: string; }} base
  *
- * @returns {Metadata}
+ * @returns {Promise<Metadata>}
  */
-function getMetadata() {
+async function getMetadata() {
+	/** @type {string[]} */
+	let changedPaths;
 	let baseRef;
 	let baseSha;
+
 	if (github.context.eventName == 'push') {
 		// If run in push action, use commit before push
 		baseSha = github.context.payload.before;
 		baseRef = github.context.payload.ref;
+		changedPaths = gitChangedFiles('HEAD', baseSha);
 
 		log.info(`Ref of push is ${baseRef}`);
 		log.info(`Previous commit before push is ${baseSha}`);
@@ -36,32 +64,28 @@ function getMetadata() {
 		// If run in PR action, use PR base
 		baseSha = github.context.payload.pull_request.base.sha;
 		baseRef = github.context.payload.pull_request.base.ref;
+		changedPaths = await prChangedFiles(
+			github.getOctokit(process.env.GITHUB_TOKEN),
+			github.context.issue
+		);
 
 		log.info(`Base ref of pull request is ${baseRef}`);
 		log.info(`Base commit of pull request is ${baseSha}`);
 	} else if (gitRevParse('HEAD', true) == 'master') {
 		// If on master, use previous commit to master
 		baseSha = gitRevParse('HEAD~1');
-		baseRef = gitRevParse('HEAD~1', true);
+		baseRef = 'master';
+		changedPaths = gitChangedFiles('HEAD', baseSha);
 
 		log.info(`On master. Previous commit to master is ${baseSha}`);
 	} else {
 		// If not on master, use master as base
 		baseSha = gitRevParse('HEAD');
 		baseRef = 'master';
+		changedPaths = gitChangedFiles('HEAD', baseSha);
 
 		log.info(`Using master as base. Master is at ${baseSha}`);
 	}
-
-	/** @type {string[]} */
-	const changedPaths = execFileSync(
-		'git',
-		['diff', '--name-only', 'HEAD', baseSha],
-		{ encoding: 'utf8' }
-	)
-		.trim()
-		.split('\n')
-		.map(s => s.trim());
 
 	return {
 		changedPaths,
@@ -72,7 +96,11 @@ function getMetadata() {
 	};
 }
 
-const metadata = getMetadata();
-console.log(metadata);
+async function main() {
+	const metadata = await getMetadata();
+	console.log(metadata);
 
-fs.writeFileSync('metadata.json', JSON.stringify(metadata, null, 2), 'utf8');
+	fs.writeFileSync('metadata.json', JSON.stringify(metadata, null, 2), 'utf8');
+}
+
+main();
