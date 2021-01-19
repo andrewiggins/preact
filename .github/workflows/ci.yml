@@ -61,7 +61,3 @@ jobs:
         with:
           name: npm-package
           path: preact.tgz
-      - name: Initialize Tachometer Results Report
-        uses: andrewiggins/tachometer-reporter-action@v2
-        with:
-          initialize: true
