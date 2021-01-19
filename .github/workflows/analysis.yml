@@ -37,9 +37,7 @@ jobs:
       - name: Prepare build output
         run: |
           cd build-output
-          ls -al
           tar -xzf preact.tgz
-          ls -al
       - name: Upload build output locally
         uses: actions/upload-artifact@v2
         with:
@@ -72,8 +70,6 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: build-output
-      - run: ls -al .
-      - run: ls -al dist
       - name: install & build
         run: |
           cd benches
@@ -102,10 +98,6 @@ jobs:
   #     - uses: actions/download-artifact@v2
   #       with:
   #         name: build-output
-  #     - uses: andrewiggins/download-base-artifact@v1
-  #       with:
-  #         artifact: npm-package
-  #         required: false
   #     - name: install & build
   #       run: |
   #         cd benches
@@ -134,10 +126,6 @@ jobs:
   #     - uses: actions/download-artifact@v2
   #       with:
   #         name: build-output
-  #     - uses: andrewiggins/download-base-artifact@v1
-  #       with:
-  #         artifact: npm-package
-  #         required: false
   #     - name: install & build
   #       run: |
   #         cd benches
@@ -167,10 +155,6 @@ jobs:
   #     - uses: actions/download-artifact@v2
   #       with:
   #         name: build-output
-  #     - uses: andrewiggins/download-base-artifact@v1
-  #       with:
-  #         artifact: npm-package
-  #         required: false
   #     - name: install & build
   #       run: |
   #         cd benches
@@ -199,10 +183,6 @@ jobs:
   #     - uses: actions/download-artifact@v2
   #       with:
   #         name: build-output
-  #     - uses: andrewiggins/download-base-artifact@v1
-  #       with:
-  #         artifact: npm-package
-  #         required: false
   #     - name: install & build
   #       run: |
   #         cd benches
@@ -231,10 +211,6 @@ jobs:
   #     - uses: actions/download-artifact@v2
   #       with:
   #         name: build-output
-  #     - uses: andrewiggins/download-base-artifact@v1
-  #       with:
-  #         artifact: npm-package
-  #         required: false
   #     - name: install & build
   #       run: |
   #         cd benches
@@ -263,10 +239,6 @@ jobs:
   #     - uses: actions/download-artifact@v2
   #       with:
   #         name: build-output
-  #     - uses: andrewiggins/download-base-artifact@v1
-  #       with:
-  #         artifact: npm-package
-  #         required: false
   #     - name: install & build
   #       run: |
   #         cd benches
