@@ -1,5 +1,5 @@
 // 3
-export  render, hydrate } from './render';
+export { render, hydrate } from './render';
 export {
 	createElement,
 	createElement as h,
