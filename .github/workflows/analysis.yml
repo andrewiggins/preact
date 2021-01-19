@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.workflow_run.conclusion == 'success'
     outputs:
-      continue: ${{ steps.changed.outputs.src_changed_count != 0 }}
+      continue: ${{ steps.changed.outputs.src_changed_count != '0' }}
     steps:
       - name: Log event trigger
         run: cat $GITHUB_EVENT_PATH
@@ -28,6 +28,7 @@ jobs:
           cat metadata.json
           changed_count=$(jq -r '.changedPaths[]' metadata.json | grep '^src/' | grep '.js$' | wc -l)
           echo "::set-output name=src_changed_count::$changed_count"
+      - run: echo "__${{ steps.changed.outputs.src_changed_count }}__"
 
   initialize:
     name: Initialize analysis environment
