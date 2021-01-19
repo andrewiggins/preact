@@ -53,7 +53,7 @@ jobs:
           npm pack --ignore-scripts
           mv preact-*.tgz preact.tgz
       - name: Compute build metadata
-        run: node ./config/compute-build-metadata.js
+        run: node ./config/compute-build-metadata.js ${{ secrets.GITHUB_TOKEN }}
       - name: Upload build metadata
         uses: actions/upload-artifact@v2
         with:

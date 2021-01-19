@@ -65,7 +65,7 @@ async function getMetadata() {
 		baseSha = github.context.payload.pull_request.base.sha;
 		baseRef = github.context.payload.pull_request.base.ref;
 		changedPaths = await prChangedFiles(
-			github.getOctokit(process.env.GITHUB_TOKEN),
+			github.getOctokit(process.argv[2]),
 			github.context.issue
 		);
 
