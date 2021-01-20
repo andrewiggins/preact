@@ -100,7 +100,12 @@ async function main() {
 	const metadata = await getMetadata();
 	console.log(metadata);
 
-	fs.writeFileSync('metadata.json', JSON.stringify(metadata, null, 2), 'utf8');
+	fs.writeFileSync(
+		'metadata.json',
+		// Ensure file has final newline for printing to console
+		JSON.stringify(metadata, null, 2) + '\n',
+		'utf8'
+	);
 }
 
 main();
