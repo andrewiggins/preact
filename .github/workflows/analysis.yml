@@ -46,7 +46,7 @@ jobs:
       - name: Log inputs
         run: |
           echo ${{ needs.should_run.outputs.continue }}
-          echo ${{ needs.should_run.outputs.continue == true }}
+          echo ${{ needs.should_run.outputs.continue == 'true' }}
       # Determine BASE_REF & BASE_SHA
       - name: Download build metadata
         uses: dawidd6/action-download-artifact@v2
