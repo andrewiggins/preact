@@ -41,10 +41,12 @@ jobs:
     name: Initialize analysis environment
     runs-on: ubuntu-latest
     needs: should_run
-    if: needs.should_run.outputs.continue == true
+    # if: needs.should_run.outputs.continue == true
     steps:
       - name: Log inputs
-        run: echo ${{ needs.should_run.outputs.continue }}
+        run: |
+          echo ${{ needs.should_run.outputs.continue }}
+          echo ${{ needs.should_run.outputs.continue == true }}
       # Determine BASE_REF & BASE_SHA
       - name: Download build metadata
         uses: dawidd6/action-download-artifact@v2
