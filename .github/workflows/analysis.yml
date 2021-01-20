@@ -15,7 +15,7 @@ jobs:
       continue: ${{ steps.changed.outputs.src_changed_count > 0 }}
     steps:
       - name: Log event trigger
-        run: echo "Triggered by $GITHUB_EVENT_NAME"
+        run: |
           echo "Ref $GITHUB_REF"
           echo "SHA $GITHUB_SHA"
           echo
