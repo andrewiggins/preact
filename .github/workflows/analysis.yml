@@ -41,7 +41,7 @@ jobs:
     name: Initialize analysis environment
     runs-on: ubuntu-latest
     needs: should_run
-    if: needs.should_run.outputs.continue
+    if: needs.should_run.outputs.continue == true
     steps:
       - name: Log inputs
         run: echo ${{ needs.should_run.outputs.continue }}
